@@ -1,14 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" 
-	xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" 
-	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" 
-	xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
-	IgnorableNamespaces="uap uap2 mp">
-  <Identity Name="HoloUrhoSharp" Publisher="CN=Egor" Version="1.0.0.0" />
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" IgnorableNamespaces="uap uap2 mp">
+  <Identity Name="HoloUrhoSharp" Publisher="CN=erik" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="bcaf243a-e17d-4aea-ab93-4bf965b64647" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>HoloUrhoSharp</DisplayName>
-    <PublisherDisplayName>Egor</PublisherDisplayName>
+    <PublisherDisplayName>Erik</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -27,9 +23,9 @@
     </Application>
   </Applications>
   <Capabilities>
-	<uap2:Capability Name="spatialPerception" />
     <Capability Name="internetClient" />
     <uap:Capability Name="picturesLibrary" />
+    <uap2:Capability Name="spatialPerception" />
     <DeviceCapability Name="webcam" />
     <DeviceCapability Name="microphone" />
   </Capabilities>

@@ -1,26 +1,25 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
 using Urho;
-using Urho.Actions;
 using Urho.HoloLens;
-using Urho.Shapes;
+using Windows.Storage;
+using Windows.Data.Pdf;
+using Windows.Storage.Pickers;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace HoloUrhoSharp1
 {
-    /// <summary>
-    /// Windows Holographic application using SharpDX.
-    /// </summary>
     internal class Program
     {
         [MTAThread]
         static void Main()
         {
             var options = new ApplicationOptions("Data");
-            var appViewSource = new UrhoAppViewSource<HelloWorldApplication>(options);
+            var appViewSource = new UrhoAppViewSource<MusicStandApplication>(options);
             appViewSource.UrhoAppViewCreated += AppViewCreated;
             Urho.Application.UnhandledException += Application_UnhandledException;
             CoreApplication.Run(appViewSource);
@@ -52,56 +51,69 @@ namespace HoloUrhoSharp1
     }
 
 
-    public class HelloWorldApplication : HoloApplication
+    public class MusicStandApplication : HoloApplication
     {
-        Node earthNode;
+        Node MusicNode;
+        Urho.Shapes.Plane Music;
+        uint PageCount = 0;
+        uint CurrentPage = 0;
 
-        public HelloWorldApplication(ApplicationOptions opts) : base(opts) { }
+        public MusicStandApplication(ApplicationOptions opts) : base(opts) { }
 
         protected override async void Start()
         {
+            await OpenPDF();
+
             // base.Start() creates a basic scene
             base.Start();
 
-            // Create a node for the Earth
-            earthNode = Scene.CreateChild();
-            earthNode.Position = new Vector3(0, 0, 1); //one meter away
-            earthNode.SetScale(0.2f); //20cm
+            MusicNode = Scene.CreateChild();
+            MusicNode.Position = new Vector3(0, 0, 1.5f); // Lets place the music 1.5 meter away
+            MusicNode.SetScale(0.4f); // 40 cm 
 
             //subscribe to some input events:
             EnableGestureManipulation = true;
             EnableGestureTapped = true;
 
-            // Create a Sphere component which is basically 
-            // a StaticModel with CoreData\Models\Sphere.mdl model and NoTexture material.
-            var earth = earthNode.CreateComponent<Sphere>();
+            // Create a Plane component for holding the music
+            Music = MusicNode.CreateComponent<Urho.Shapes.Plane>();
+            
             // Override the default material (material is a set of tecniques, parameters and textures)
-            Material earthMaterial = ResourceCache.GetMaterial("Materials/Earth.xml");
-            earth.SetMaterial(earthMaterial);
+            Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
+            Music.SetMaterial(MusicMaterial);
+            
+// requires Microphone capability enabled
+await RegisterCortanaCommands(new Dictionary<string, Action> {
+        { "bigger",  () => MusicNode.Scale *= 1.2f },
+        { "smaller", () => MusicNode.Scale *= 0.8f },
+        { "next", () => NextPage() },
+        { "previous", () => PreviousPage() }
+    });
+await TextToSpeech("Lets play som music!");
+        }
 
-            // Same for the Moon
-            var moonNode = earthNode.CreateChild();
-            const float moonRelativeSize = 1738.1f / 3963.2f;
-            moonNode.SetScale(moonRelativeSize);
-            moonNode.Position = new Vector3(1.6f, 0, 0);
-            var moon = moonNode.CreateComponent<Sphere>();
-            // Material.FromImage is the easiest way to create a material from an image (using Diff.xml technique)
-            moon.SetMaterial(Material.FromImage("Textures/Moon.jpg"));
+        private void PreviousPage()
+        {
+            if (CurrentPage > 0)
+            {
+                CurrentPage--;
+                Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
+                Music.SetMaterial(MusicMaterial);
+            }
+        }
 
-            // Run a few actions to spin the Earth and the Moon, do not await these calls as they have RepeatForever action
-            earthNode.RunActions(new RepeatForever(new RotateBy(duration: 1f, deltaAngleX: 0, deltaAngleY: -4, deltaAngleZ: 0)));
-            moonNode.RunActions(new RepeatForever(new RotateAroundBy(1f, earthNode.WorldPosition, 0, -3, 0)));
-
-            // requires Microphone capability enabled
-            await RegisterCortanaCommands(new Dictionary<string, Action> {
-                    { "bigger",  () => earthNode.Scale *= 1.2f },
-                    { "smaller", () => earthNode.Scale *= 0.8f }
-                });
-            await TextToSpeech("Hello world from UrhoSharp!");
+        private void NextPage()
+        {
+            if (CurrentPage < PageCount)
+            {
+                CurrentPage++;
+                Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
+                Music.SetMaterial(MusicMaterial);
+            }
         }
 
         // HoloLens optical stabilization (optional)
-        public override Vector3 FocusWorldPoint => earthNode.WorldPosition;
+        public override Vector3 FocusWorldPoint => MusicNode.WorldPosition;
 
         protected override void OnUpdate(float timeStep)
         {
@@ -109,19 +121,70 @@ namespace HoloUrhoSharp1
 
         // handle input:
 
-        Vector3 earthPostionBeforeManipulations;
+        Vector3 MusicPostionBeforeManipulations;
         public override void OnGestureManipulationStarted()
         {
-            earthPostionBeforeManipulations = earthNode.Position;
+            MusicPostionBeforeManipulations = MusicNode.Position;
         }
 
         public override void OnGestureManipulationUpdated(Vector3 relativeHandPosition)
         {
-            earthNode.Position = relativeHandPosition + earthPostionBeforeManipulations;
+            MusicNode.Position = relativeHandPosition + MusicPostionBeforeManipulations;
         }
 
         public override void OnGestureTapped()
         {
+            NextPage();
         }
+        private async Task<Boolean> OpenPDF()
+        {
+            /*
+            FileOpenPicker openPicker = new FileOpenPicker();
+            openPicker.ViewMode = PickerViewMode.Thumbnail;
+            openPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            openPicker.FileTypeFilter.Add(".pdf");
+
+            StorageFile file = await openPicker.PickSingleFileAsync();
+            */
+            try
+            {
+                StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:/Data/Boy Paganini - Cello.pdf"));
+                if (file != null)
+                {
+                    await LoadPdfFileAsync(file);
+                    return true;
+                }
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+            return false;
+        }
+private async Task LoadPdfFileAsync(StorageFile selectedFile)
+{
+    PdfDocument pdfDocument = await PdfDocument.LoadFromFileAsync(selectedFile); ;
+    if (pdfDocument != null && pdfDocument.PageCount > 0)
+    {
+        PageCount = pdfDocument.PageCount;
+        for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
+        {
+            var pdfPage = pdfDocument.GetPage((uint)pageIndex);
+            if (pdfPage != null)
+            {
+                MemoryStream ImageStream = new MemoryStream();
+                PdfPageRenderOptions pdfPageRenderOptions = new PdfPageRenderOptions();
+                pdfPageRenderOptions.DestinationWidth = (uint)(1024);                                
+                await pdfPage.RenderToStreamAsync(ImageStream.AsRandomAccessStream(), pdfPageRenderOptions);
+                ImageStream.Position = 0;
+                Urho.Resources.Resource res = new Urho.Resources.Resource();
+                res.Load(new MemoryBuffer(ImageStream));
+                res.Name = "Page_" + pageIndex.ToString();
+                ResourceCache.AddManualResource(res);
+                pdfPage.Dispose();
+            }
+        }
+    }
+}
     }
 }

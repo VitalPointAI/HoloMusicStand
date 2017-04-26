@@ -16,8 +16,9 @@
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <PackageCertificateKeyFile>HoloUrho_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>HoloUrhoSharp1_TemporaryKey.pfx</PackageCertificateKeyFile>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
+    <PackageCertificateThumbprint>DEC9031A9256F0A008E85BB643992B044744A4C7</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +43,10 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <Content Include="Data\Boy Paganini - Cello.pdf" />
+    <Content Include="Data\Boy Paganini - Dbl, Bass.pdf" />
+    <Content Include="Data\Boy Paganini Score.pdf" />
+    <None Include="HoloUrhoSharp1_TemporaryKey.pfx" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
@@ -54,11 +59,6 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\Textures\Earth.jpg" />
-    <Content Include="Data\Materials\Earth.xml">
-      <SubType>Designer</SubType>
-    </Content>
-    <Content Include="Data\Textures\Moon.jpg" />
     <Content Include="Properties\Default.rd.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -70,7 +70,6 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
