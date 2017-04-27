@@ -10,6 +10,7 @@ using Windows.Data.Pdf;
 using Windows.Storage.Pickers;
 using System.IO;
 using System.Threading.Tasks;
+using Urho.Resources;
 
 namespace HoloUrhoSharp1
 {
@@ -69,18 +70,19 @@ namespace HoloUrhoSharp1
 
             MusicNode = Scene.CreateChild();
             MusicNode.Position = new Vector3(0, 0, 1.5f); // Lets place the music 1.5 meter away
-            MusicNode.SetScale(0.4f); // 40 cm 
+            MusicNode.Rotation = new Quaternion(0,90,-90);
+            MusicNode.Scale = new Vector3(0.4f * 1.414f, 0, 0.4f);
 
             //subscribe to some input events:
             EnableGestureManipulation = true;
             EnableGestureTapped = true;
 
             // Create a Plane component for holding the music
-            Music = MusicNode.CreateComponent<Urho.Shapes.Plane>();
+            Music = MusicNode.CreateComponent<Urho.Shapes.Plane>();            
             
             // Override the default material (material is a set of tecniques, parameters and textures)
-            Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
-            Music.SetMaterial(MusicMaterial);
+            //Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
+            Music.SetMaterial(Material.FromImage(ResourceCache.GetImage("Page_"+CurrentPage.ToString())));
             
 // requires Microphone capability enabled
 await RegisterCortanaCommands(new Dictionary<string, Action> {
@@ -97,8 +99,7 @@ await TextToSpeech("Lets play som music!");
             if (CurrentPage > 0)
             {
                 CurrentPage--;
-                Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
-                Music.SetMaterial(MusicMaterial);
+                Music.SetMaterial(Material.FromImage(ResourceCache.GetImage("Page_" + CurrentPage.ToString())));
             }
         }
 
@@ -107,13 +108,12 @@ await TextToSpeech("Lets play som music!");
             if (CurrentPage < PageCount)
             {
                 CurrentPage++;
-                Material MusicMaterial = ResourceCache.GetMaterial("Page_" + CurrentPage.ToString());
-                Music.SetMaterial(MusicMaterial);
+                Music.SetMaterial(Material.FromImage(ResourceCache.GetImage("Page_" + CurrentPage.ToString())));
             }
         }
 
         // HoloLens optical stabilization (optional)
-        public override Vector3 FocusWorldPoint => MusicNode.WorldPosition;
+        //public override Vector3 FocusWorldPoint => MusicNode.WorldPosition;
 
         protected override void OnUpdate(float timeStep)
         {
@@ -147,8 +147,9 @@ await TextToSpeech("Lets play som music!");
             StorageFile file = await openPicker.PickSingleFileAsync();
             */
             try
-            {
-                StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:/Data/Boy Paganini - Cello.pdf"));
+            {                
+                StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(
+                    new Uri(@"ms-appx:///Data/Boy Paganini - Cello.pdf"));
                 if (file != null)
                 {
                     await LoadPdfFileAsync(file);
@@ -177,10 +178,12 @@ private async Task LoadPdfFileAsync(StorageFile selectedFile)
                 pdfPageRenderOptions.DestinationWidth = (uint)(1024);                                
                 await pdfPage.RenderToStreamAsync(ImageStream.AsRandomAccessStream(), pdfPageRenderOptions);
                 ImageStream.Position = 0;
-                Urho.Resources.Resource res = new Urho.Resources.Resource();
-                res.Load(new MemoryBuffer(ImageStream));
-                res.Name = "Page_" + pageIndex.ToString();
-                ResourceCache.AddManualResource(res);
+
+                Image i = new Image();
+                i.Load(new MemoryBuffer(ImageStream));
+                i.Name = "Page_" + pageIndex.ToString();
+                ResourceCache.AddManualResource(i);
+
                 pdfPage.Dispose();
             }
         }
